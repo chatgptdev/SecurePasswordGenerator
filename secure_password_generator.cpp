@@ -23,6 +23,7 @@
  */
 
 #include <iostream>
+#include <fstream>
 #include <ctime>
 #include <random>
 #include <string>
@@ -97,6 +98,8 @@ void print_help() {
     std::cout << "  -s\t\tRequire at least one special character" << std::endl;
     std::cout << "  -n NUM\tGenerate NUM passwords (default: 1)" << std::endl;
     std::cout << "  -q\t\tQuiet mode - only print passwords" << std::endl;
+    std::cout << "  -f FILE\tWrite passwords to FILE (-a to append, otherwise overwrite)" << std::endl;
+    std::cout << "  -a\t\tAppend passwords to the file specified with -f" << std::endl;
     std::cout << "  -h\t\tDisplay this help message and exit" << std::endl;
 }
 
@@ -105,6 +108,8 @@ int main(int argc, char *argv[]) {
     bool has_special = false;
     int num_passwords = 1;
     bool quiet_mode = false;
+    bool append = false;
+    std::string file_path;
 
     for (int i = 1; i < argc; ++i) {
         if (strcmp(argv[i], "-l") == 0) {
@@ -134,29 +139,55 @@ int main(int argc, char *argv[]) {
             }
         } else if (strcmp(argv[i], "-q") == 0) {
             quiet_mode = true;
-        } else if (strcmp(argv[i], "-h") == 0) {
-            print_help();
-            return 0;
-        } else {
-            std::cerr << "Error: Unknown switch: " << argv[i] << std::endl;
-            print_help();
-            return -1;
-        }
-    }
+        } else if (strcmp(argv[i], "-f") == 0) {
+            if (i + 1 < argc) {
+                file_path = argv[++i];
+            } else {
+                std::cerr << "Error: Missing value for -f switch." << std::endl;
+                print_help();
+                return -1;
+            }
+        } else if (strcmp(argv[i], "-a") == 0) {
+            append = true;
+      } else if (strcmp(argv[i], "-h") == 0) {
+          print_help();
+          return 0;
+      } else {
+          std::cerr << "Error: Unknown switch: " << argv[i] << std::endl;
+          print_help();
+          return -1;
+      }
+  }
 
-    if (!quiet_mode) {
-        if (num_passwords == 1) {
-            std::cout << "Generated secure password: ";
-        } else {
-            std::cout << "Generated secure passwords:" << std::endl;
-        }
-    }
+  std::ofstream output_file;
+  if (!file_path.empty()) {
+      output_file.open(file_path, append ? std::ios::app : std::ios::trunc);
+      if (!output_file.is_open()) {
+          std::cerr << "Error: Cannot open output file." << std::endl;
+          return -1;
+      }
+  }
 
-    for (int i = 0; i < num_passwords; ++i) {
-        std::string secure_password = generate_password(password_length, has_special);
-        std::cout << secure_password << std::endl;
-    }
+  if (!quiet_mode && file_path.empty()) {
+      if (num_passwords == 1) {
+          std::cout << "Generated secure password: ";
+      } else {
+          std::cout << "Generated secure passwords:" << std::endl;
+      }
+  }
 
-    return 0;
+  for (int i = 0; i < num_passwords; ++i) {
+      std::string secure_password = generate_password(password_length, has_special);
+      if (!file_path.empty()) {
+          output_file << secure_password << std::endl;
+      } else {
+          std::cout << secure_password << std::endl;
+      }
+  }
+
+  if (output_file.is_open()) {
+      output_file.close();
+  }
+
+  return 0;
 }
-
