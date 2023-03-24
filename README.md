@@ -1,6 +1,6 @@
 # Secure Password Generator
 
-Secure Password Generator is a command-line tool for generating secure passwords. The program supports customization of password length, the inclusion of special characters, and the ability to generate multiple passwords at once.
+Secure Password Generator is a command-line tool for generating secure passwords. The program supports customization of password length, the inclusion of special characters, and the ability to generate multiple passwords at once. Additionally, it allows users to write the generated passwords to a file or append them to an existing file, providing flexible output options for different use cases.
 
 ## Features
 
@@ -8,6 +8,7 @@ Secure Password Generator is a command-line tool for generating secure passwords
 - Option to include special characters
 - Option to generate multiple passwords at once
 - Command-line switches for controlling password length, special character inclusion, and quiet mode
+- Supports writing generated passwords to a file or appending them to an existing file
 
 ## Implementation
 
@@ -25,8 +26,8 @@ The program is implemented in C++ and uses the C++11 random number library for g
 1. Clone the repository:
 
 ```sh
-git clone https://github.com/yourusername/secure-password-generator.git
-cd secure-password-generator
+git clone https://github.com/chatgptdev/SecurePasswordGenerator.git
+cd SecurePasswordGenerator
 ```
 
 2. Create a build directory:
@@ -60,6 +61,8 @@ Options:
   -s           Require at least one special character
   -n NUM       Generate NUM passwords (default: 1)
   -q           Quiet mode - only print passwords
+  -f FILE      Write passwords to FILE (-a to append, otherwise overwrite)
+  -a           Append passwords to the file specified with -f
   -h           Display this help message and exit
 ```
 
