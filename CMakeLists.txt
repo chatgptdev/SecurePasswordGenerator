@@ -32,7 +32,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 
         # Set the .deb file name to include the target architecture
         set(CPACK_DEBIAN_FILE_NAME "DEB-DEFAULT")
-        set(CPACK_DEBIAN_${CPACK_PACKAGE_NAME}_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CMAKE_SYSTEM_PROCESSOR}.deb")
+        set(CPACK_DEBIAN_${CPACK_PACKAGE_NAME}_FILE_NAME "${CPACK_PACKAGE_NAME}-${CMAKE_SYSTEM_PROCESSOR}.deb")
     elseif(LINUX_DISTRIBUTION MATCHES "Fedora" OR LINUX_DISTRIBUTION MATCHES "CentOS" OR LINUX_DISTRIBUTION MATCHES "RedHat" OR LINUX_DISTRIBUTION MATCHES "openSUSE")
         # CPack configuration for generating .rpm package
         set(CPACK_GENERATOR "RPM")
@@ -41,7 +41,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 
         # Set the .rpm file name to include the target architecture
         set(CPACK_RPM_FILE_NAME "RPM-DEFAULT")
-        set(CPACK_RPM_${CPACK_PACKAGE_NAME}_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CMAKE_SYSTEM_PROCESSOR}.rpm")
+        set(CPACK_RPM_${CPACK_PACKAGE_NAME}_FILE_NAME "${CPACK_PACKAGE_NAME}-${CMAKE_SYSTEM_PROCESSOR}.rpm")
     endif()
 
     include(CPack)
