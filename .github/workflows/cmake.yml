@@ -74,6 +74,7 @@ jobs:
         
     - name: Compress Ubuntu assets
       run: |
+        chmod +x artifacts/ubuntu/secure_password_generator
         tar czvf artifacts/ubuntu/secure_password_generator-ubuntu-x86_64.tar.gz -C artifacts/ubuntu secure_password_generator
 
     - name: Compress Windows assets
@@ -84,6 +85,7 @@ jobs:
 
     - name: Compress macOS assets
       run: |
+        chmod +x artifacts/mac/secure_password_generator
         tar czvf artifacts/mac/secure_password_generator-macOS.tar.gz -C artifacts/mac secure_password_generator
 
 
