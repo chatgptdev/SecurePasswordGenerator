@@ -25,20 +25,29 @@
 #include <iostream>
 #include <fstream>
 #include <ctime>
+#include <memory>
 #include <random>
 #include <string>
 #include <algorithm>
 #include <cstring>
 
-std::string generate_password(int length, bool hasSpecial) {
+struct secure_deleter {
+    void operator()(char *ptr) const {
+        if (ptr) {
+            std::fill(ptr, ptr + std::strlen(ptr), 0);
+            delete[] ptr;
+        }
+    }
+};
+
+std::unique_ptr<char[], secure_deleter> generate_password(int length, bool hasSpecial) {
     const std::string uppercase_letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const std::string lowercase_letters = "abcdefghijklmnopqrstuvwxyz";
     const std::string digits = "0123456789";
     const std::string symbols = "+-/*";
     const std::string special_chars = "!@#$%^&*()_= [{]}\\|;:'\",<.>?`~";
 
-    std::string password = "";
-    password.reserve(length);
+    std::unique_ptr<char[], secure_deleter> password(new char[length + 1]);
 
     std::random_device rd;
     auto gen = [&rd](int min, int max) {
@@ -46,46 +55,40 @@ std::string generate_password(int length, bool hasSpecial) {
         return dist(rd);
     };
 
-    password.push_back(uppercase_letters[gen(0, uppercase_letters.length() - 1)]);
-    password.push_back(lowercase_letters[gen(0, lowercase_letters.length() - 1)]);
-    password.push_back(digits[gen(0, digits.length() - 1)]);
-    password.push_back(symbols[gen(0, symbols.length() - 1)]);
+    password[0] = uppercase_letters[gen(0, uppercase_letters.length() - 1)];
+    password[1] = lowercase_letters[gen(0, lowercase_letters.length() - 1)];
+    password[2] = digits[gen(0, digits.length() - 1)];
+    password[3] = symbols[gen(0, symbols.length() - 1)];
 
     int special_count = hasSpecial ? gen(1, length / 3) : 0;
     int current_special_count = 0;
 
     for (int i = 4; i < length; ++i) {
         if (current_special_count < special_count && i >= length - special_count) {
-            password.push_back(special_chars[gen(0, special_chars.length() - 1)]);
+            password[i] = special_chars[gen(0, special_chars.length() - 1)];
             current_special_count++;
         } else {
-            int random_selector = gen(0, 4);
+            int random_selector = gen(0, 3);
             switch (random_selector) {
                 case 0:
-                    password.push_back(uppercase_letters[gen(0, uppercase_letters.length() - 1)]);
+                    password[i] = uppercase_letters[gen(0, uppercase_letters.length() - 1)];
                     break;
                 case 1:
-                    password.push_back(lowercase_letters[gen(0, lowercase_letters.length() - 1)]);
+                    password[i] = lowercase_letters[gen(0, lowercase_letters.length() - 1)];
                     break;
                 case 2:
-                    password.push_back(digits[gen(0, digits.length() - 1)]);
+                    password[i] = digits[gen(0, digits.length() - 1)];
                     break;
                 case 3:
-                    password.push_back(symbols[gen(0, symbols.length() - 1)]);
-                    break;
-                case 4:
-                    if (current_special_count < special_count) {
-                        password.push_back(special_chars[gen(0, special_chars.length() - 1)]);
-                        current_special_count++;
-                    } else {
-                        i--; // Decrement i to repeat this iteration with a new random_selector value
-                    }
+                    password[i] = symbols[gen(0, symbols.length() - 1)];
                     break;
             }
         }
     }
 
-    std::shuffle(password.begin(), password.end(), rd);
+    std::shuffle(password.get(), password.get() + length, rd);
+    password[length] = '\0';
+
     return password;
 }
 
@@ -177,11 +180,12 @@ int main(int argc, char *argv[]) {
   }
 
   for (int i = 0; i < num_passwords; ++i) {
-      std::string secure_password = generate_password(password_length, has_special);
+      std::unique_ptr<char[], secure_deleter> secure_password = generate_password(password_length, has_special);
       if (!file_path.empty()) {
-          output_file << secure_password << std::endl;
+          output_file.write(secure_password.get(), password_length);
+          output_file << std::endl;
       } else {
-          std::cout << secure_password << std::endl;
+          std::cout << secure_password.get() << std::endl;
       }
   }
 
