@@ -46,3 +46,9 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 
     include(CPack)
 endif()
+
+# Check if the system is macOS
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    # Set the macOS target architectures to x64 and arm64 for universal binary
+    set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64")
+endif()
