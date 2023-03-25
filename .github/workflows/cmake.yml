@@ -109,7 +109,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.RELEASE_CREATION_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: artifacts/windows/secure_password_generator.exe
+        asset_path: artifacts/windows/${{env.BUILD_TYPE}}/secure_password_generator.exe
         asset_name: secure_password_generator-windows.exe
         asset_content_type: application/octet-stream
 
