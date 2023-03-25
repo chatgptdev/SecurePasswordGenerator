@@ -15,7 +15,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
+        os: [ubuntu-20.04, windows-latest, macOS-latest]
 
     steps:
     - uses: actions/checkout@v3
@@ -28,6 +28,12 @@ jobs:
     - name: Build
       # Build your program with the given configuration
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+      
+    - name: Create .deb package (Ubuntu)
+      if: matrix.os == 'ubuntu-20.04'
+      run: |
+        cd build
+        cmake --build . --target package
 
     - name: Store artifacts
       uses: actions/upload-artifact@v2
@@ -35,5 +41,71 @@ jobs:
         name: secure_password_generator-${{ matrix.os }}
         path: |
           ${{github.workspace}}/build/secure_password_generator
-          ${{github.workspace}}/build/secure_password_generator.exe
+          ${{github.workspace}}/build/${{env.BUILD_TYPE}}/secure_password_generator.exe
+          ${{github.workspace}}/build/*.deb
 
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Download artifacts
+      uses: actions/download-artifact@v2
+      with:
+        name: secure_password_generator-ubuntu-20.04
+        path: artifacts/ubuntu
+
+    - name: Download artifacts
+      uses: actions/download-artifact@v2
+      with:
+        name: secure_password_generator-windows-latest
+        path: artifacts/windows
+
+    - name: Download artifacts
+      uses: actions/download-artifact@v2
+      with:
+        name: secure_password_generator-macOS-latest
+        path: artifacts/mac
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset (Ubuntu)
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: artifacts/ubuntu/secure_password_generator
+        asset_name: secure_password_generator-ubuntu
+        asset_content_type: application/octet-stream
+
+    - name: Upload Release Asset (Windows)
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: artifacts/windows/secure_password_generator.exe
+        asset_name: secure_password_generator-windows.exe
+        asset_content_type: application/octet-stream
+
+    - name: Upload Release Asset (macOS)
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: artifacts/mac/secure_password_generator
+        asset_name: secure_password_generator-macOS
+        asset_content_type: application/octet-stream
