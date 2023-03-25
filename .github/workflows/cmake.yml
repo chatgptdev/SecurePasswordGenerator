@@ -71,6 +71,21 @@ jobs:
       with:
         name: secure_password_generator-macOS-latest
         path: artifacts/mac
+        
+    - name: Compress Ubuntu assets
+      run: |
+        tar czvf artifacts/ubuntu/secure_password_generator-ubuntu-x86_64.tar.gz -C artifacts/ubuntu secure_password_generator
+
+    - name: Compress Windows assets
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y zip
+        zip -j artifacts/windows/secure_password_generator-windows.zip artifacts/windows/${{env.BUILD_TYPE}}/secure_password_generator.exe
+
+    - name: Compress macOS assets
+      run: |
+        tar czvf artifacts/mac/secure_password_generator-macOS.tar.gz -C artifacts/mac secure_password_generator
+
 
     - name: Create Release
       id: create_release
@@ -89,8 +104,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.RELEASE_CREATION_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: artifacts/ubuntu/secure_password_generator
-        asset_name: secure_password_generator-ubuntu
+        asset_path: artifacts/ubuntu/secure_password_generator-ubuntu-x86_64.tar.gz
+        asset_name: secure_password_generator-ubuntu-x86_64.tar.gz
         asset_content_type: application/octet-stream
         
     - name: Upload Linux DEB package
@@ -109,8 +124,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.RELEASE_CREATION_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: artifacts/windows/${{env.BUILD_TYPE}}/secure_password_generator.exe
-        asset_name: secure_password_generator-windows.exe
+        asset_path: artifacts/windows/${{env.BUILD_TYPE}}/secure_password_generator-windows.zip
+        asset_name: secure_password_generator-windows.zip
         asset_content_type: application/octet-stream
 
     - name: Upload Release Asset (macOS)
@@ -119,6 +134,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.RELEASE_CREATION_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: artifacts/mac/secure_password_generator
-        asset_name: secure_password_generator-macOS
+        asset_path: artifacts/mac/secure_password_generator-macOS.tar.gz
+        asset_name: secure_password_generator-macOS.tar.gz
         asset_content_type: application/octet-stream
