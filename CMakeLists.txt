@@ -32,7 +32,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 
     # Common CPack configuration
     set(CPACK_PACKAGE_NAME "secure_password_generator")
-    set(CPACK_PACKAGE_VERSION "1.0.2")
+    set(CPACK_PACKAGE_VERSION "1.0.3")
     set(CPACK_PACKAGE_CONTACT "ChatGPTDev <chatgptdev@tuta.io>")
     set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "secure_password_generator is a Command-line tool for generating secure passwords")
 
