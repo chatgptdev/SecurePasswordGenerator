@@ -52,3 +52,9 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     # Set the macOS target architectures to x64 and arm64 for universal binary
     set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64")
 endif()
+
+# Check if the system is Windows
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    # Use the static C runtime
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
