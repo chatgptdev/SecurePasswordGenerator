@@ -22,6 +22,9 @@
  * limitations under the License.
  */
 
+#ifdef _WIN32
+#include <Windows.h>
+#endif
 #include <iostream>
 #include <fstream>
 #include <ctime>
@@ -30,6 +33,7 @@
 #include <string>
 #include <algorithm>
 #include <cstring>
+
 
 struct secure_deleter {
     void operator()(char *ptr) const {
