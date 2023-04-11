@@ -59,6 +59,7 @@ Generate secure passwords with optional constraints.
 
 Options:
   -l LENGTH    Set the password length (default: 20, minimum: 6)
+  -b           Require at least one symbol character('+','-','/' or '*')
   -s           Require at least one special character
   -n NUM       Generate NUM passwords (default: 1)
   -q           Quiet mode - only print passwords

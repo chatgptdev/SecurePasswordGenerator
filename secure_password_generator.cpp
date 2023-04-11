@@ -44,7 +44,7 @@ struct secure_deleter {
     }
 };
 
-std::unique_ptr<char[], secure_deleter> generate_password(int length, bool hasSpecial) {
+std::unique_ptr<char[], secure_deleter> generate_password(int length, bool hasSymbols, bool hasSpecial) {
     const std::string uppercase_letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const std::string lowercase_letters = "abcdefghijklmnopqrstuvwxyz";
     const std::string digits = "0123456789";
@@ -62,17 +62,26 @@ std::unique_ptr<char[], secure_deleter> generate_password(int length, bool hasSp
     password[0] = uppercase_letters[gen(0, uppercase_letters.length() - 1)];
     password[1] = lowercase_letters[gen(0, lowercase_letters.length() - 1)];
     password[2] = digits[gen(0, digits.length() - 1)];
-    password[3] = symbols[gen(0, symbols.length() - 1)];
+
+    if (hasSymbols) {
+        password[3] = symbols[gen(0, symbols.length() - 1)];
+    }
 
     int special_count = hasSpecial ? gen(1, length / 3) : 0;
     int current_special_count = 0;
 
-    for (int i = 4; i < length; ++i) {
+    for (int i = 3 + (hasSymbols ? 1 : 0); i < length; ++i) {
         if (current_special_count < special_count && i >= length - special_count) {
             password[i] = special_chars[gen(0, special_chars.length() - 1)];
             current_special_count++;
         } else {
-            int random_selector = gen(0, 3);
+            int random_selector;
+            if (hasSymbols) {
+                random_selector = gen(0, 3);
+            } else {
+                random_selector = gen(0, 2);
+            }
+
             switch (random_selector) {
                 case 0:
                     password[i] = uppercase_letters[gen(0, uppercase_letters.length() - 1)];
@@ -84,7 +93,9 @@ std::unique_ptr<char[], secure_deleter> generate_password(int length, bool hasSp
                     password[i] = digits[gen(0, digits.length() - 1)];
                     break;
                 case 3:
-                    password[i] = symbols[gen(0, symbols.length() - 1)];
+                    if (hasSymbols) {
+                        password[i] = symbols[gen(0, symbols.length() - 1)];
+                    }
                     break;
             }
         }
@@ -165,6 +176,7 @@ void print_help() {
     std::cout << std::endl;
     std::cout << "Options:" << std::endl;
     std::cout << "  -l LENGTH\tSet the password length (default: 20, minimum: 6)" << std::endl;
+    std::cout << "  -b\t\tRequire at least one symbol character('+','-','/' or '*')" << std::endl;
     std::cout << "  -s\t\tRequire at least one special character" << std::endl;
     std::cout << "  -n NUM\tGenerate NUM passwords (default: 1)" << std::endl;
     std::cout << "  -q\t\tQuiet mode - only print passwords" << std::endl;
@@ -176,6 +188,7 @@ void print_help() {
 
 int main(int argc, char *argv[]) {
     int password_length = 20;
+    bool has_symbol = false;
     bool has_special = false;
     int num_passwords = 1;
     bool quiet_mode = false;
@@ -201,6 +214,8 @@ int main(int argc, char *argv[]) {
             }
         } else if (strcmp(argv[i], "-s") == 0) {
             has_special = true;
+        } else if (strcmp(argv[i], "-b") == 0) {
+            has_symbol = true;
         } else if (strcmp(argv[i], "-n") == 0) {
             if (i + 1 < argc) {
                 num_passwords = std::stoi(argv[++i]);
@@ -256,7 +271,7 @@ int main(int argc, char *argv[]) {
   int ret = 0;
 
   for (int i = 0; i < num_passwords; ++i) {
-      std::unique_ptr<char[], secure_deleter> secure_password = generate_password(password_length, has_special);
+      std::unique_ptr<char[], secure_deleter> secure_password = generate_password(password_length, has_symbol, has_special);
       if (!file_path.empty()) {
           output_file.write(secure_password.get(), password_length);
           output_file << std::endl;
