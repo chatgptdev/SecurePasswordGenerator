@@ -1,13 +1,12 @@
 # Secure Password Generator
 
-Secure Password Generator is a command-line tool for generating secure passwords. The program supports customization of password length, the inclusion of special characters, and the ability to generate multiple passwords at once. Additionally, it allows users to write the generated passwords to a file or append them to an existing file, and copy the passwords to the clipboard, providing flexible output options for different use cases.
+Secure Password Generator is a command-line tool for generating secure passwords. The program supports customization of password length, the inclusion of symbols or special characters, and the ability to generate multiple passwords at once. Additionally, it allows users to write the generated passwords to a file or append them to an existing file, and copy the passwords to the clipboard, providing flexible output options for different use cases.
 
 ## Features
 
 - Generate secure passwords with a specified length (default length: 20)
-- Option to include special characters
+- Command-line switches for controlling password length, symbols or special character inclusion, and quiet mode
 - Option to generate multiple passwords at once
-- Command-line switches for controlling password length, special character inclusion, and quiet mode
 - Supports writing generated passwords to a file or appending them to an existing file
 - Supports copying generated passwords to the clipboard on Windows, Linux, and macOS
 
