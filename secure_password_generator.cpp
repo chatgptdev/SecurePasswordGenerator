@@ -34,7 +34,7 @@
 #include <algorithm>
 #include <cstring>
 
-#define APP_VERSION "1.2.0"
+#define APP_VERSION "1.3.1"
 
 struct secure_deleter {
     void operator()(char *ptr) const {
