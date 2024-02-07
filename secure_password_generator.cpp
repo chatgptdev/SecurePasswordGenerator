@@ -34,6 +34,7 @@
 #include <algorithm>
 #include <cstring>
 
+#define APP_VERSION "1.1.0"
 
 struct secure_deleter {
     void operator()(char *ptr) const {
@@ -173,6 +174,7 @@ bool copy_to_clipboard(const std::string& text) {
 void print_help() {
     std::cout << "Usage: secure_password_generator [OPTIONS]" << std::endl;
     std::cout << "Generate secure passwords with optional constraints." << std::endl;
+    std::cout << "Version: " << APP_VERSION << std::endl;
     std::cout << std::endl;
     std::cout << "Options:" << std::endl;
     std::cout << "  -l LENGTH\tSet the password length (default: 20, minimum: 6)" << std::endl;
