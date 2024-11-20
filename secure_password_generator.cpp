@@ -33,8 +33,16 @@
 #include <string>
 #include <algorithm>
 #include <cstring>
+#include <map>
+#include <cmath>
 
 #define APP_VERSION "1.3.1"
+
+struct PasswordStrengthResult {
+    bool is_strong;
+    std::string reason;
+    double entropy_bits;
+};
 
 struct secure_deleter {
     void operator()(char *ptr) const {
@@ -45,7 +53,7 @@ struct secure_deleter {
     }
 };
 
-std::unique_ptr<char[], secure_deleter> generate_password(int length, bool hasSymbols, bool hasSpecial) {
+std::unique_ptr<char[], secure_deleter> generate_password_internal(int length, bool hasSymbols, bool hasSpecial) {
     const std::string uppercase_letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const std::string lowercase_letters = "abcdefghijklmnopqrstuvwxyz";
     const std::string digits = "0123456789";
@@ -106,6 +114,90 @@ std::unique_ptr<char[], secure_deleter> generate_password(int length, bool hasSy
     password[length] = '\0';
 
     return password;
+}
+
+double calculate_entropy(const char* password) {
+    int charset_size = 26 + 26 + 10;
+    for (size_t i = 0; password[i] != '\0'; ++i) {
+        if (!std::isalnum(password[i])) {
+            charset_size += 32;
+            break;
+        }
+    }
+    return std::strlen(password) * std::log2(charset_size);
+}
+
+bool has_repeating_patterns(const char* password) {
+    size_t len = std::strlen(password);
+    for (size_t i = 0; i < len - 2; i++) {
+        if (password[i] == password[i+1] && password[i] == password[i+2]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool has_good_distribution(const char* password) {
+    std::map<char, int> char_count;
+    size_t len = std::strlen(password);
+    
+    for (size_t i = 0; password[i] != '\0'; ++i) {
+        char_count[password[i]]++;
+    }
+    
+    double threshold = len * 0.3;
+    for (const auto& pair : char_count) {
+        if (pair.second > threshold) {
+            return false;
+        }
+    }
+    return true;
+}
+
+PasswordStrengthResult validate_password_strength(const char* password) {
+    PasswordStrengthResult result;
+    result.is_strong = true;
+    
+    double entropy = calculate_entropy(password);
+    result.entropy_bits = entropy;
+    
+    if (entropy < 60) {
+        result.is_strong = false;
+        result.reason = "Insufficient entropy";
+        return result;
+    }
+
+    if (has_repeating_patterns(password)) {
+        result.is_strong = false;
+        result.reason = "Contains repeating patterns";
+        return result;
+    }
+
+    if (!has_good_distribution(password)) {
+        result.is_strong = false;
+        result.reason = "Poor character distribution";
+        return result;
+    }
+
+    result.reason = "Password meets strength requirements";
+    return result;
+}
+
+std::unique_ptr<char[], secure_deleter> generate_password(int length, bool hasSymbols, bool hasSpecial) {
+    const int MAX_ATTEMPTS = 10;
+    int attempts = 0;
+    
+    while (attempts < MAX_ATTEMPTS) {
+        auto password = generate_password_internal(length, hasSymbols, hasSpecial);
+        auto strength = validate_password_strength(password.get());
+        
+        if (strength.is_strong) {
+            return password;
+        }
+        attempts++;
+    }
+    
+    throw std::runtime_error("Could not generate a sufficiently strong password after maximum attempts");
 }
 
 bool copy_to_clipboard(const std::string& text) {
