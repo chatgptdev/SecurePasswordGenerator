@@ -16,13 +16,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, windows-latest, macOS-11]
+        os: [ubuntu-20.04, windows-latest, macOS-13]
         include:
           - os: ubuntu-20.04
             artifact_suffix: ""
           - os: windows-latest
             artifact_suffix: ".exe"
-          - os: macOS-11
+          - os: macOS-13
             artifact_suffix: ""
 
     steps:
