@@ -9,7 +9,6 @@ on:
     branches: [ "main" ]
 
 env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
 
 jobs:
@@ -18,17 +17,21 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-20.04, windows-latest, macOS-11]
+        include:
+          - os: ubuntu-20.04
+            artifact_suffix: ""
+          - os: windows-latest
+            artifact_suffix: ".exe"
+          - os: macOS-11
+            artifact_suffix: ""
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Configure CMake
-      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: Build
-      # Build your program with the given configuration
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
       
     - name: Create .deb package (Ubuntu)
@@ -38,104 +41,54 @@ jobs:
         cmake --build . --target package
 
     - name: Store artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: secure_password_generator-${{ matrix.os }}
         path: |
-          ${{github.workspace}}/build/secure_password_generator
-          ${{github.workspace}}/build/${{env.BUILD_TYPE}}/secure_password_generator.exe
+          ${{github.workspace}}/build/secure_password_generator${{ matrix.artifact_suffix }}
+          ${{github.workspace}}/build/${{env.BUILD_TYPE}}/secure_password_generator${{ matrix.artifact_suffix }}
           ${{github.workspace}}/build/*.deb
+        retention-days: 5  # Add retention period for artifacts
 
   release:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Explicitly declare required permissions
     if: startsWith(github.ref, 'refs/tags/')
+    
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
-    - name: Download artifacts
-      uses: actions/download-artifact@v2
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
       with:
-        name: secure_password_generator-ubuntu-20.04
-        path: artifacts/ubuntu
+        path: artifacts
+        merge-multiple: true  # Merge all artifacts into one directory
 
-    - name: Download artifacts
-      uses: actions/download-artifact@v2
-      with:
-        name: secure_password_generator-windows-latest
-        path: artifacts/windows
-
-    - name: Download artifacts
-      uses: actions/download-artifact@v2
-      with:
-        name: secure_password_generator-macOS-11
-        path: artifacts/mac
+    - name: Prepare release assets
+      run: |
+        # Ubuntu
+        chmod +x artifacts/secure_password_generator || true
+        tar czvf secure_password_generator-ubuntu-x86_64.tar.gz -C artifacts secure_password_generator || true
         
-    - name: Compress Ubuntu assets
-      run: |
-        chmod +x artifacts/ubuntu/secure_password_generator
-        tar czvf artifacts/ubuntu/secure_password_generator-ubuntu-x86_64.tar.gz -C artifacts/ubuntu secure_password_generator
-
-    - name: Compress Windows assets
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y zip
-        zip -j artifacts/windows/secure_password_generator-windows.zip artifacts/windows/${{env.BUILD_TYPE}}/secure_password_generator.exe
-
-    - name: Compress macOS assets
-      run: |
-        chmod +x artifacts/mac/secure_password_generator
-        tar czvf artifacts/mac/secure_password_generator-macOS.tar.gz -C artifacts/mac secure_password_generator
-
+        # Windows
+        zip -j secure_password_generator-windows.zip artifacts/Release/secure_password_generator.exe || true
+        
+        # macOS
+        chmod +x artifacts/secure_password_generator || true
+        tar czvf secure_password_generator-macOS.tar.gz -C artifacts secure_password_generator || true
 
     - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
+      uses: softprops/action-gh-release@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.RELEASE_CREATION_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use default token
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        files: |
+          secure_password_generator-ubuntu-x86_64.tar.gz
+          artifacts/*.deb
+          secure_password_generator-windows.zip
+          secure_password_generator-macOS.tar.gz
         draft: false
         prerelease: false
-
-    - name: Upload Release Asset (Ubuntu)
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.RELEASE_CREATION_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: artifacts/ubuntu/secure_password_generator-ubuntu-x86_64.tar.gz
-        asset_name: secure_password_generator-ubuntu-x86_64.tar.gz
-        asset_content_type: application/octet-stream
-        
-    - name: Upload Linux DEB package
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.RELEASE_CREATION_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: artifacts/ubuntu/secure_password_generator_x86_64.deb
-        asset_name: secure_password_generator_x86_64.deb
-        asset_content_type: application/octet-stream
-
-    - name: Upload Release Asset (Windows)
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.RELEASE_CREATION_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: artifacts/windows/secure_password_generator-windows.zip
-        asset_name: secure_password_generator-windows.zip
-        asset_content_type: application/octet-stream
-
-    - name: Upload Release Asset (macOS)
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.RELEASE_CREATION_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: artifacts/mac/secure_password_generator-macOS.tar.gz
-        asset_name: secure_password_generator-macOS.tar.gz
-        asset_content_type: application/octet-stream
+        fail_on_unmatched_files: false
